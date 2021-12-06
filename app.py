@@ -3,6 +3,9 @@ import requests
 from flask import Flask, render_template, request, redirect
 import psycopg2
 
+alphabet = 'qwertyuiopasdfghjklzxcvbnm1234567890()!@#$%*{}[]|\?/`_-+=.'
+
+
 app = Flask(__name__)
 conn = psycopg2.connect(database="service_db",
                         user="postgres",
@@ -39,10 +42,13 @@ def registration():
         name = request.form.get('name')
         login = request.form.get('login')
         password = request.form.get('password')
-        if (login == '') or (login.count(' ') != 0) or (password.count(' ') != 0) or (password == '') or (
-                name == '') or (name.count(' ') > 3) or (len(name) == name.count(' ')):
-            return render_template('registration.html', attention='Введите некорректные данные')
-        else:
+
+        list_ = [name, login, password]
+        for i, line in enumerate(list_):
+            list_[i] = check(line, i)
+            if list_[i] != 'good':
+                return render_template('registration.html', attention=list_[i])
+        if list_.count('good') == 3:
             cursor.execute('INSERT INTO service.users (full_name, login, password) VALUES (%s, %s, %s);',
                            (str(name), str(login), str(password)))
             conn.commit()
@@ -50,6 +56,26 @@ def registration():
             return redirect('/login/')
 
     return render_template('registration.html')
+
+
+def check(line, num):
+    if num == 1:
+        cursor.execute("SELECT login FROM service.users WHERE login=%s",
+                       (str(line),))
+        records = list(cursor.fetchall())
+        if len(records) != 0:
+            return 'Такой логин уже занят'
+    if len(line) == 0:
+        return 'Одна или несколько строк ничего не содержат'
+    elif len(line) <= 2:
+        return 'Одна или несколько строк слишком короткие, минимальная длина 3'
+    elif line.count(' ') != 0:
+        return 'Одна или несколько строк имеют пробелы'
+    else:
+        for s in line.lower():
+            if s not in alphabet:
+                return 'Одна или несколько строк имеют запрешённые символы'
+        return 'good'
 
 
 if __name__ == '__main__':

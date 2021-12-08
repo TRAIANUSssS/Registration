@@ -21,6 +21,7 @@ def login():
             username = request.form.get('username')
             password = request.form.get('password')
             a = [check(username, 0), check(password, 0)]
+
             if a.count('good') != 2:
                 return render_template('login.html', attention=a[0] if a[0] != 'good' else a[1])
             else:

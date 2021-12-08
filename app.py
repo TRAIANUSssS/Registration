@@ -5,7 +5,6 @@ import psycopg2
 
 alphabet = 'qwertyuiopasdfghjklzxcvbnm1234567890()!@#$%*{}[]|\?/`_-+=.'
 
-
 app = Flask(__name__)
 conn = psycopg2.connect(database="service_db",
                         user="postgres",
@@ -17,14 +16,13 @@ cursor = conn.cursor()
 
 @app.route('/login/', methods=['POST', 'GET'])
 def login():
-    attention = 'Введите корректное значение'
-
     if request.method == 'POST':
         if request.form.get("login"):
             username = request.form.get('username')
             password = request.form.get('password')
-            if (username == '') or (username.count(' ') != 0) or (password.count(' ') != 0) or (password == ''):
-                return render_template('login.html', attention='Введите некорректные данные')
+            a = [check(username, 0), check(password, 0)]
+            if a.count('good') != 2:
+                return render_template('login.html', attention=a[0] if a[0] != 'good' else a[1])
             else:
                 cursor.execute("SELECT * FROM service.users WHERE login=%s AND password=%s",
                                (str(username), str(password)))
